@@ -1,0 +1,203 @@
+import { useEffect, useRef, useState } from "react";
+
+function useCountUp(target, trigger) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!trigger) return;
+    let frame;
+    const start = performance.now();
+    const duration = 1200;
+    const step = (now) => {
+      const p = Math.min((now - start) / duration, 1);
+      setVal(Math.floor(p * target));
+      if (p < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [trigger, target]);
+  return val;
+}
+
+export default function PrescottVane() {
+  const [open, setOpen] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [statsVisible, setStatsVisible] = useState(false);
+  const [activeSection, setActiveSection] = useState("intro");
+  const statsRef = useRef(null);
+
+  useEffect(() => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap";
+    document.head.appendChild(link);
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setStatsVisible(true); },
+      { threshold: 0.4 }
+    );
+    if (statsRef.current) obs.observe(statsRef.current);
+    return () => { document.head.removeChild(link); obs.disconnect(); };
+  }, []);
+
+  const practices = [
+    { area: "Cross-Border M&A", detail: "Structuring and closing transactions across nine jurisdictions." },
+    { area: "Arbitration & Disputes", detail: "Representing institutional clients before ICC and LCIA tribunals." },
+    { area: "Private Capital", detail: "Fund formation, co-investment structures, and regulatory strategy." },
+    { area: "Regulatory Counsel", detail: "Advising boards on compliance exposure before it becomes litigation." },
+  ];
+
+  const cases = [
+    { year: "2024", title: "Halberd Industries v. State Regulatory Authority", result: "Favorable settlement, confidential terms" },
+    { year: "2023", title: "Formation of the Aldermere Infrastructure Fund", result: "$1.2B closed across 3 jurisdictions" },
+    { year: "2022", title: "Vantage Group cross-border acquisition of Ferro-Tech", result: "Completed in 74 days" },
+  ];
+
+  const years = useCountUp(52, statsVisible);
+  const matters = useCountUp(1140, statsVisible);
+  const rate = useCountUp(92, statsVisible);
+
+  const navItems = [
+    { id: "intro", label: "Firm" },
+    { id: "practices", label: "Practices" },
+    { id: "matters", label: "Notable Matters" },
+    { id: "contact", label: "Contact" },
+  ];
+
+  const goTo = (id) => {
+    setActiveSection(id);
+    setMenuOpen(false);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  return (
+    <div style={{ fontFamily: "'Source Sans 3', sans-serif", background: "#EDE7DA", color: "#101410" }}>
+      <style>{`
+        .disp { font-family: 'Fraunces', serif; }
+        .rule { border-color: rgba(16,20,16,0.15); }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+      `}</style>
+
+      {/* Mobile top bar */}
+      <div className="md:hidden flex items-center justify-between px-6 py-5 border-b rule sticky top-0 z-40" style={{ background: "#EDE7DA" }}>
+        <span className="disp text-lg" style={{ color: "#1B2A22" }}>Prescott &amp; Vane</span>
+        <button className="flex flex-col gap-1.5" onClick={() => setMenuOpen((o) => !o)} aria-label="Menu">
+          <span style={{ width: 22, height: 1.5, background: "#101410", transform: menuOpen ? "rotate(45deg) translateY(6px)" : "none", transition: "transform 0.3s" }} />
+          <span style={{ width: 22, height: 1.5, background: "#101410", opacity: menuOpen ? 0 : 1 }} />
+          <span style={{ width: 22, height: 1.5, background: "#101410", transform: menuOpen ? "rotate(-45deg) translateY(-6px)" : "none", transition: "transform 0.3s" }} />
+        </button>
+      </div>
+      {menuOpen && (
+        <div className="flex flex-col gap-6 px-6 py-8 md:hidden text-lg disp border-b rule" style={{ background: "#EDE7DA" }}>
+          {navItems.map((n) => (
+            <button key={n.id} className="text-left" onClick={() => goTo(n.id)}>{n.label}</button>
+          ))}
+        </div>
+      )}
+
+      <div className="md:flex">
+        {/* Fixed sidebar — desktop only */}
+        <aside
+          className="hidden md:flex md:flex-col md:justify-between shrink-0"
+          style={{ width: 260, position: "sticky", top: 0, height: "100vh", background: "#1B2A22", color: "#EDE7DA", padding: "3rem 2rem" }}
+        >
+          <div>
+            <span className="disp text-xl block mb-1">Prescott</span>
+            <span className="disp text-xl block mb-10">&amp; Vane</span>
+            <nav className="flex flex-col gap-5 text-sm">
+              {navItems.map((n) => (
+                <button
+                  key={n.id}
+                  onClick={() => goTo(n.id)}
+                  className="text-left"
+                  style={{ color: activeSection === n.id ? "#A08A5B" : "rgba(237,231,218,0.75)" }}
+                >
+                  {n.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+          <div>
+            <p className="text-xs opacity-60 mb-4">Founded 1974<br />London &amp; Singapore</p>
+            <button className="text-sm px-4 py-2 w-full" style={{ background: "#A08A5B", color: "#1B2A22" }} onClick={() => goTo("contact")}>
+              Speak to Counsel
+            </button>
+          </div>
+        </aside>
+
+        {/* Main content */}
+        <div className="flex-1 min-w-0">
+          <header id="intro" className="px-6 md:px-16 py-20 md:py-32 border-b rule">
+            <p className="text-xs uppercase mb-6" style={{ color: "#A08A5B", letterSpacing: "0.25em" }}>Founded 1974 · London &amp; Singapore</p>
+            <h1 className="disp" style={{ fontSize: "clamp(2.2rem, 5vw, 4.4rem)", lineHeight: 1.05, maxWidth: "16ch" }}>
+              Counsel for decisions that don't get a second attempt.
+            </h1>
+            <p className="mt-8 max-w-xl text-base md:text-lg" style={{ color: "#3a4038" }}>
+              Prescott &amp; Vane advises boards, funds, and founders on the matters where the cost of being wrong is measured in more than money.
+            </p>
+          </header>
+
+          <section ref={statsRef} className="px-6 md:px-16 py-16 border-b rule grid grid-cols-3 gap-6" style={{ background: "#1B2A22", color: "#EDE7DA" }}>
+            <div><p className="disp text-3xl md:text-4xl" style={{ color: "#A08A5B" }}>{years}</p><p className="text-xs md:text-sm mt-2 opacity-75">Years in practice</p></div>
+            <div><p className="disp text-3xl md:text-4xl" style={{ color: "#A08A5B" }}>{matters}+</p><p className="text-xs md:text-sm mt-2 opacity-75">Matters handled</p></div>
+            <div><p className="disp text-3xl md:text-4xl" style={{ color: "#A08A5B" }}>{rate}%</p><p className="text-xs md:text-sm mt-2 opacity-75">Resolved pre-trial</p></div>
+          </section>
+
+          <section id="practices" className="px-6 md:px-16 py-20 md:py-28 border-b rule">
+            <h2 className="disp text-3xl mb-12">Practice Areas</h2>
+            <div className="flex flex-col">
+              {practices.map((p, i) => (
+                <button
+                  key={i}
+                  onClick={() => setOpen(open === i ? null : i)}
+                  className="text-left py-6 border-t rule flex flex-col focus:outline-2 focus:outline-offset-2"
+                  style={{ borderBottomWidth: i === practices.length - 1 ? 1 : 0, borderBottomColor: "rgba(16,20,16,0.15)" }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="disp text-xl" style={{ color: "#1B2A22" }}>{String(i + 1).padStart(2, "0")} — {p.area}</span>
+                    <span style={{ color: "#A08A5B", transform: open === i ? "rotate(45deg)" : "none", transition: "transform 0.25s", display: "inline-block" }}>+</span>
+                  </div>
+                  <div style={{ maxHeight: open === i ? 120 : 0, overflow: "hidden", transition: "max-height 0.35s ease" }}>
+                    <p className="mt-3 text-sm max-w-lg" style={{ color: "#4a4f47" }}>{p.detail}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section id="matters" className="px-6 md:px-16 py-20 md:py-28 border-b rule" style={{ background: "#1B2A22", color: "#EDE7DA" }}>
+            <h2 className="disp text-3xl mb-12">Notable Matters</h2>
+            <div className="flex flex-col">
+              {cases.map((c, i) => (
+                <div key={i} className="flex flex-col md:flex-row md:items-center gap-2 md:gap-10 py-7 border-t hover:pl-2 transition-all" style={{ borderColor: "rgba(237,231,218,0.15)" }}>
+                  <span className="disp text-2xl w-20 shrink-0" style={{ color: "#A08A5B" }}>{c.year}</span>
+                  <span className="text-lg flex-1" style={{ color: "#EDE7DA" }}>{c.title}</span>
+                  <span className="text-sm" style={{ color: "rgba(237,231,218,0.6)" }}>{c.result}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section id="contact" className="px-6 md:px-16 py-24 md:py-32 flex flex-col md:flex-row justify-between gap-12">
+            <div className="max-w-md">
+              <h2 className="disp text-3xl mb-4">Every engagement begins with a confidential conversation.</h2>
+              <p className="text-sm" style={{ color: "#4a4f47" }}>No matter is too early-stage or too sensitive to raise with us directly.</p>
+            </div>
+            <form className="flex flex-col gap-4 w-full md:max-w-sm" onSubmit={(e) => e.preventDefault()}>
+              <input placeholder="Name" className="bg-transparent border-b rule py-2 focus:outline-none text-sm" />
+              <input placeholder="Organisation" className="bg-transparent border-b rule py-2 focus:outline-none text-sm" />
+              <textarea placeholder="Briefly describe the matter" rows={3} className="bg-transparent border-b rule py-2 focus:outline-none text-sm resize-none" />
+              <button className="mt-2 px-7 py-3 text-sm self-start focus:outline-2 focus:outline-offset-2" style={{ background: "#1B2A22", color: "#EDE7DA" }}>
+                Request a Consultation
+              </button>
+            </form>
+          </section>
+
+          <footer className="px-6 md:px-16 py-8 border-t rule flex flex-col md:flex-row justify-between gap-2 text-xs" style={{ color: "#6b6f66" }}>
+            <span>تم جميع حقوق النشر — الأستاذ Mohamed Trky © 2026</span>
+            <span>Attorney Advertising · London · Singapore</span>
+          </footer>
+        </div>
+      </div>
+    </div>
+  );
+}
